@@ -1,0 +1,1756 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" data-theme="">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LiveRecorder Pro</title>
+<style>
+/* ===== CSS Variables ===== */
+:root {
+  --bg: #f1f5f9; --surface: #ffffff; --border: #e2e8f0;
+  --text: #1e293b; --text2: #64748b; --accent: #6366f1;
+  --accent-glow: rgba(99,102,241,.35); --success: #10b981;
+  --warning: #f59e0b; --error: #ef4444; --radius: 14px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.05);
+  --shadow: 0 4px 24px rgba(0,0,0,.08);
+  --shadow-lg: 0 12px 48px rgba(0,0,0,.12);
+  --glass: rgba(255,255,255,.7);
+  --gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+}
+[data-theme="dark"] {
+  --bg: #0f172a; --surface: #1e293b; --border: #334155;
+  --text: #f1f5f9; --text2: #94a3b8; --accent: #818cf8;
+  --accent-glow: rgba(129,140,248,.35); --success: #34d399;
+  --warning: #fbbf24; --error: #f87171;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.3);
+  --shadow: 0 4px 24px rgba(0,0,0,.4);
+  --shadow-lg: 0 12px 48px rgba(0,0,0,.5);
+  --glass: rgba(30,41,59,.75);
+  --gradient: linear-gradient(135deg, #818cf8 0%, #a78bfa 50%, #c084fc 100%);
+}
+
+/* ===== Reset & Base ===== */
+* { margin:0; padding:0; box-sizing:border-box; }
+html { font-size: 15px; }
+body {
+  font-family: 'Inter', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex; justify-content: center;
+  padding: 20px 16px 40px;
+  transition: background .3s, color .3s;
+  background-image:
+    radial-gradient(ellipse at 20% 20%, var(--accent-glow) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 80%, rgba(168,85,247,.15) 0%, transparent 60%);
+  background-attachment: fixed;
+}
+.panel { width: 100%; max-width: 600px; }
+
+/* ===== Header ===== */
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px; gap: 12px;
+}
+.logo-area { display: flex; align-items: center; gap: 10px; }
+.logo-icon {
+  width: 38px; height: 38px; border-radius: 10px;
+  background: var(--gradient); display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem; color: #fff; box-shadow: 0 4px 16px var(--accent-glow);
+}
+.logo-text h1 { font-size: 1.15rem; font-weight: 700; letter-spacing: -.3px; line-height: 1.1; }
+.logo-text span { font-size: .68rem; color: var(--text2); font-weight: 500; }
+.header-actions { display: flex; gap: 6px; align-items: center; }
+.icon-btn {
+  width: 34px; height: 34px; border-radius: 9px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--text2); font-size: 1rem;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all .15s; position: relative;
+}
+.icon-btn:hover { background: var(--border); color: var(--text); border-color: var(--text2); }
+.icon-btn:active { transform: scale(.93); }
+.icon-btn .badge {
+  position: absolute; top: -4px; right: -4px; width: 8px; height: 8px;
+  border-radius: 50%; background: var(--error);
+}
+
+/* ===== Status Pill ===== */
+.status-pill {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 6px 14px; border-radius: 99px; font-size: .78rem; font-weight: 600;
+  background: var(--surface); border: 1px solid var(--border);
+  white-space: nowrap; transition: all .3s;
+}
+.status-pill.live {
+  background: rgba(239,68,68,.12); border-color: var(--error); color: var(--error);
+  box-shadow: 0 0 20px rgba(239,68,68,.15);
+}
+.status-dot {
+  width: 9px; height: 9px; border-radius: 50%; background: var(--text2);
+  transition: all .3s;
+}
+.status-pill.live .status-dot {
+  background: var(--error); animation: pulse-dot 1s infinite;
+  box-shadow: 0 0 8px var(--error);
+}
+@keyframes pulse-dot {
+  0%,100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.6); opacity: .5; }
+}
+
+/* ===== Tab Bar ===== */
+.tab-bar {
+  display: flex; gap: 2px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 3px; margin-bottom: 16px;
+  box-shadow: var(--shadow-sm);
+}
+.tab-btn {
+  flex: 1; padding: 9px 0; border: none; border-radius: 10px;
+  background: transparent; color: var(--text2); font-size: .78rem; font-weight: 600;
+  cursor: pointer; transition: all .2s; display: flex; align-items: center;
+  justify-content: center; gap: 5px;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active {
+  background: var(--bg); color: var(--accent);
+  box-shadow: var(--shadow-sm);
+}
+.tab-panel { display: none; }
+.tab-panel.active { display: block; animation: fadeUp .3s ease; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== Cards ===== */
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 18px; margin-bottom: 12px;
+  box-shadow: var(--shadow-sm); transition: all .2s; position: relative;
+  overflow: hidden;
+}
+.card:hover { box-shadow: var(--shadow); }
+.card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px;
+}
+.card-label {
+  font-size: .72rem; font-weight: 700; color: var(--text2); text-transform: uppercase;
+  letter-spacing: .8px;
+}
+.card-label .icon { margin-right: 4px; }
+
+/* ===== Inputs ===== */
+.input-wrap { position: relative; }
+input[type="text"], input[type="number"] {
+  width: 100%; padding: 11px 14px; border: 1.5px solid var(--border);
+  border-radius: 10px; font-size: .88rem; background: var(--bg); color: var(--text);
+  outline: none; transition: all .2s; font-family: inherit;
+}
+input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+input::placeholder { color: var(--text2); opacity: .5; }
+.input-suffix {
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  font-size: .7rem; color: var(--text2); pointer-events: none; font-weight: 600;
+}
+.input-clear {
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; color: var(--text2); cursor: pointer;
+  font-size: 1.1rem; padding: 4px 8px; border-radius: 6px; display: none;
+  transition: all .15s; line-height: 1;
+}
+.input-clear:hover { color: var(--error); background: rgba(239,68,68,.08); }
+.input-clear.visible { display: block; }
+
+/* ===== Segment Buttons ===== */
+.seg-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.seg-btn {
+  flex: 1; min-width: 50px; padding: 8px 4px; border: 1.5px solid var(--border);
+  border-radius: 9px; background: var(--bg); color: var(--text);
+  font-size: .76rem; font-weight: 600; cursor: pointer;
+  transition: all .15s; text-align: center; letter-spacing: -.2px;
+}
+.seg-btn:hover { border-color: var(--accent); background: var(--surface); }
+.seg-btn.on {
+  background: var(--accent); color: #fff; border-color: var(--accent);
+  box-shadow: 0 2px 10px var(--accent-glow);
+}
+
+/* ===== Giant Record Button ===== */
+.record-section { text-align: center; margin: 8px 0; }
+.record-btn {
+  width: 80px; height: 80px; border-radius: 50%; border: none;
+  font-size: 2rem; cursor: pointer; transition: all .3s ease;
+  display: inline-flex; align-items: center; justify-content: center;
+  position: relative; z-index: 1;
+}
+.record-btn::before {
+  content: ''; position: absolute; inset: -6px; border-radius: 50%;
+  z-index: -1; transition: all .3s;
+}
+.record-btn.start {
+  background: var(--error); color: #fff;
+  box-shadow: 0 8px 30px rgba(239,68,68,.4);
+}
+.record-btn.start::before {
+  background: transparent; border: 2px solid transparent;
+}
+.record-btn.start:hover {
+  transform: scale(1.08);
+  box-shadow: 0 12px 40px rgba(239,68,68,.5);
+}
+.record-btn.start:active { transform: scale(.95); }
+.record-btn.start.recording {
+  animation: record-pulse 2s infinite;
+}
+@keyframes record-pulse {
+  0%,100% { box-shadow: 0 8px 30px rgba(239,68,68,.4); }
+  50% { box-shadow: 0 8px 50px rgba(239,68,68,.7), 0 0 0 16px rgba(239,68,68,.08); }
+}
+.record-btn.stop {
+  background: var(--surface); color: var(--text); border: 2px solid var(--border);
+  box-shadow: var(--shadow);
+}
+.record-btn.stop:hover { border-color: var(--text2); transform: scale(1.05); }
+.record-btn.stop:active { transform: scale(.95); }
+.record-label {
+  margin-top: 10px; font-size: .78rem; font-weight: 700; color: var(--text2);
+  letter-spacing: .5px; transition: color .3s;
+}
+.record-label.live { color: var(--error); }
+
+/* ===== Action Buttons ===== */
+.action-row { display: flex; gap: 8px; }
+.btn {
+  flex: 1; padding: 11px 0; border: none; border-radius: 10px;
+  font-size: .85rem; font-weight: 700; cursor: pointer;
+  transition: all .15s; letter-spacing: -.2px;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+}
+.btn:active { transform: scale(.96); }
+.btn:disabled { opacity: .35; cursor: not-allowed; transform: none; }
+.btn-accent { background: var(--accent); color: #fff; box-shadow: 0 4px 14px var(--accent-glow); }
+.btn-accent:hover:not(:disabled) { filter: brightness(1.1); }
+.btn-outline {
+  background: var(--surface); color: var(--text); border: 1.5px solid var(--border);
+}
+.btn-outline:hover:not(:disabled) { background: var(--border); }
+.btn-danger { background: var(--error); color: #fff; }
+.btn-danger:hover:not(:disabled) { opacity: .9; }
+.btn-warning { background: var(--warning); color: #000; }
+.btn-warning:hover:not(:disabled) { opacity: .85; }
+
+/* ===== Stats Grid ===== */
+.stats-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
+}
+.stat-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 16px; text-align: center;
+  box-shadow: var(--shadow-sm); transition: all .2s;
+}
+.stat-card:hover { box-shadow: var(--shadow); }
+.stat-value {
+  font-size: 1.6rem; font-weight: 800; letter-spacing: -.5px;
+  font-variant-numeric: tabular-nums; font-family: 'JetBrains Mono', 'Cascadia Code', monospace;
+}
+.stat-value.accent { color: var(--accent); }
+.stat-value.success { color: var(--success); }
+.stat-value.warning { color: var(--warning); }
+.stat-value.error { color: var(--error); }
+.stat-label { font-size: .68rem; color: var(--text2); margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+
+/* ===== Progress Ring ===== */
+.progress-ring-wrap { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 8px 0 16px; }
+.progress-ring { position: relative; width: 100px; height: 100px; flex-shrink: 0; }
+.progress-ring svg { transform: rotate(-90deg); width: 100px; height: 100px; }
+.progress-ring .bg { fill: none; stroke: var(--border); stroke-width: 6; }
+.progress-ring .fg { fill: none; stroke: var(--accent); stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset .5s ease; }
+.progress-ring .inner {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+}
+.progress-ring .inner .time { font-size: 1.4rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+.progress-ring .inner .unit { font-size: .62rem; color: var(--text2); font-weight: 600; }
+.progress-ring .inner.live .time { color: var(--error); }
+
+/* ===== Log Box ===== */
+.log-box {
+  background: #0f172a; border: 1px solid var(--border); border-radius: 12px;
+  padding: 12px; max-height: 220px; overflow-y: auto;
+  font-family: 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace;
+  font-size: .7rem; line-height: 1.8; color: #94a3b8;
+}
+.log-box .log-info { color: #94a3b8; }
+.log-box .log-warn { color: #fbbf24; }
+.log-box .log-error { color: #f87171; }
+.log-box .log-success { color: #34d399; }
+.log-box .log-accent { color: #a78bfa; }
+.log-box::-webkit-scrollbar { width: 4px; }
+.log-box::-webkit-scrollbar-thumb { background: #334155; border-radius: 2px; }
+
+/* ===== History ===== */
+.hist-item {
+  display: flex; align-items: center; gap: 10px; padding: 12px 14px;
+  border-bottom: 1px solid var(--border); cursor: pointer; transition: background .12s;
+}
+.hist-item:hover { background: var(--border); }
+.hist-item:last-child { border-bottom: none; }
+.hist-thumb {
+  width: 36px; height: 36px; border-radius: 8px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 1rem;
+  background: var(--bg);
+}
+.hist-info { flex: 1; min-width: 0; }
+.hist-info .hi-name { font-weight: 700; font-size: .85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hist-info .hi-url { font-size: .68rem; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hist-info .hi-meta { font-size: .65rem; color: var(--text2); margin-top: 2px; }
+.hist-del {
+  background: none; border: none; color: var(--text2); cursor: pointer;
+  font-size: 1rem; padding: 4px 8px; border-radius: 6px; opacity: .4; transition: all .15s;
+}
+.hist-del:hover { opacity: 1; color: var(--error); background: rgba(239,68,68,.08); }
+.hist-search {
+  width: 100%; padding: 9px 14px; border: 1.5px solid var(--border);
+  border-radius: 10px; font-size: .82rem; background: var(--bg); color: var(--text);
+  outline: none; margin-bottom: 8px; font-family: inherit; transition: all .2s;
+}
+.hist-search:focus { border-color: var(--accent); }
+
+/* ===== Timeline ===== */
+.timeline { position: relative; padding-left: 20px; }
+.timeline::before {
+  content: ''; position: absolute; left: 8px; top: 0; bottom: 0;
+  width: 2px; background: var(--border);
+}
+.timeline-item {
+  position: relative; padding: 8px 0 8px 18px; font-size: .76rem;
+  border-bottom: 1px solid var(--border);
+}
+.timeline-item::before {
+  content: ''; position: absolute; left: -15px; top: 13px;
+  width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+  border: 2px solid var(--surface);
+}
+.timeline-item.active::before { background: var(--error); box-shadow: 0 0 8px var(--error); }
+.timeline-item .tl-time { font-weight: 700; font-family: monospace; color: var(--text2); }
+.timeline-item .tl-file { color: var(--accent); font-weight: 600; word-break: break-all; }
+.timeline-item .tl-size { color: var(--text2); font-size: .7rem; }
+
+/* ===== Toast ===== */
+.toast-container {
+  position: fixed; top: 20px; right: 20px; z-index: 999;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.toast {
+  padding: 12px 20px; border-radius: 10px; font-size: .82rem; font-weight: 600;
+  color: #fff; box-shadow: var(--shadow-lg); animation: slideIn .3s ease;
+  max-width: 340px; display: flex; align-items: center; gap: 8px;
+}
+.toast.success { background: #059669; }
+.toast.error { background: #dc2626; }
+.toast.warning { background: #d97706; }
+.toast.info { background: #4f46e5; }
+@keyframes slideIn {
+  from { transform: translateX(120%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes slideOut {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(120%); opacity: 0; }
+}
+
+/* ===== Modal ===== */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,.55);
+  z-index: 100; justify-content: center; align-items: center;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.show { display: flex; }
+.modal-box {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+  padding: 28px; max-width: 380px; width: 90%; text-align: center;
+  box-shadow: var(--shadow-lg); animation: fadeUp .3s ease;
+}
+.modal-box h3 { font-size: 1rem; margin-bottom: 8px; }
+.modal-box p { font-size: .84rem; color: var(--text2); margin-bottom: 22px; line-height: 1.6; }
+.modal-btns { display: flex; gap: 10px; justify-content: center; }
+.modal-btn {
+  padding: 10px 28px; border-radius: 10px; font-size: .84rem; font-weight: 700;
+  cursor: pointer; border: none; transition: all .15s;
+}
+.modal-btn-cancel { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+.modal-btn-cancel:hover { background: var(--border); }
+.modal-btn-danger { background: var(--error); color: #fff; }
+.modal-btn-danger:hover { opacity: .85; }
+.modal-btn-accent { background: var(--accent); color: #fff; }
+.modal-btn-accent:hover { opacity: .9; }
+
+/* ===== Shortcuts bar ===== */
+.shortcuts-bar {
+  display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+  margin-top: 16px; font-size: .65rem; color: var(--text2); opacity: .6;
+}
+.shortcuts-bar kbd {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+  padding: 1px 6px; font-family: monospace; font-size: .65rem;
+}
+
+/* ===== Empty State ===== */
+.empty-state { text-align: center; padding: 30px 16px; color: var(--text2); }
+.empty-state .empty-icon { font-size: 3rem; margin-bottom: 10px; opacity: .4; }
+.empty-state p { font-size: .82rem; }
+
+/* ===== Responsive ===== */
+@media (max-width: 480px) {
+  .panel { max-width: 100%; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .stat-value { font-size: 1.3rem; }
+  .seg-btn { font-size: .7rem; padding: 7px 2px; }
+  .record-btn { width: 68px; height: 68px; font-size: 1.6rem; }
+}
+
+/* ===== Schedule Section ===== */
+.schedule-row { display: flex; gap: 8px; align-items: center; }
+.schedule-row input { flex: 1; min-width: 0; }
+.schedule-switch {
+  width: 48px; height: 28px; border-radius: 14px; background: var(--border);
+  cursor: pointer; position: relative; transition: all .2s; flex-shrink: 0;
+  border: none;
+}
+.schedule-switch.on { background: var(--accent); }
+.schedule-switch::after {
+  content: ''; position: absolute; top: 3px; left: 3px;
+  width: 22px; height: 22px; border-radius: 50%; background: #fff;
+  transition: all .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2);
+}
+.schedule-switch.on::after { left: 23px; }
+</style>
+</head>
+<body>
+
+<div class="panel">
+  <!-- ===== Header ===== -->
+  <div class="header">
+    <div class="logo-area">
+      <div class="logo-icon">⬤</div>
+      <div class="logo-text">
+        <h1>LiveRecorder Pro</h1>
+        <span>抖音直播录制控制台</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="status-pill" id="statusPill">
+        <span class="status-dot"></span>
+        <span id="statusLabel">就绪</span>
+      </div>
+      <button class="icon-btn" onclick="toggleTheme()" title="切换主题">🌓</button>
+      <button class="icon-btn" onclick="showShortcuts()" title="快捷键">⌨</button>
+    </div>
+  </div>
+
+  <!-- ===== Tab Bar ===== -->
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="control">🎛 控制台</button>
+    <button class="tab-btn" data-tab="stats">📊 统计</button>
+    <button class="tab-btn" data-tab="history">🕐 历史</button>
+    <button class="tab-btn" data-tab="settings">⚙ 设置</button>
+  </div>
+
+  <!-- ==================== TAB: Control ==================== -->
+  <div class="tab-panel active" id="tab-control">
+    <!-- URL Input -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-label"><span class="icon">🔗</span> 直播间 URL</span>
+        <button class="icon-btn" onclick="toggleHistoryInControl()" title="历史记录" style="width:28px;height:28px;font-size:.75rem">🕐</button>
+      </div>
+      <div class="input-wrap">
+        <input type="text" id="url" placeholder="https://live.douyin.com/xxxxxxxxx" oninput="toggleClearBtn()" autocomplete="off">
+        <button class="input-clear" id="clearUrlBtn" onclick="clearUrl()">✕</button>
+      </div>
+      <div class="hist-drop" id="histDropInControl" style="display:none;margin-top:8px;max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;background:var(--surface)"></div>
+    </div>
+
+    <!-- Name Input -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-label"><span class="icon">👤</span> 主播名（可选）</span>
+      </div>
+      <div class="input-wrap">
+        <input type="text" id="name" placeholder="给个备注名，留空则自动提取" oninput="toggleNameClearBtn()" autocomplete="off">
+        <button class="input-clear" id="clearNameBtn" onclick="clearName()">✕</button>
+      </div>
+    </div>
+
+    <!-- Quality & Buffer -->
+    <div class="card">
+      <div class="card-header"><span class="card-label"><span class="icon">🎥</span> 画质</span></div>
+      <div class="seg-row" id="qualRow">
+        <button class="seg-btn on" data-qual="or4">原画</button>
+        <button class="seg-btn" data-qual="uhd">超清</button>
+        <button class="seg-btn" data-qual="hd">高清</button>
+        <button class="seg-btn" data-qual="sd">标清</button>
+        <button class="seg-btn" data-qual="ld">流畅</button>
+      </div>
+      <div style="margin-top:14px">
+        <span class="card-label" style="margin-bottom:8px;display:block"><span class="icon">📦</span> 缓冲大小</span>
+        <div class="seg-row" id="bufRow">
+          <button class="seg-btn" data-buf="10">10 MB</button>
+          <button class="seg-btn on" data-buf="20">20 MB</button>
+          <button class="seg-btn" data-buf="40">40 MB</button>
+          <button class="seg-btn" data-buf="80">80 MB</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Segment Duration -->
+    <div class="card">
+      <div class="card-header"><span class="card-label"><span class="icon">✂</span> 切割时长</span></div>
+      <div class="input-wrap">
+        <input type="number" id="segInput" min="0" max="1440" value="0" placeholder="0 = 不切割" oninput="onSegInput()">
+        <span class="input-suffix" style="right:40px">分钟</span>
+        <button class="input-clear" id="clearSegBtn" onclick="clearSeg()">✕</button>
+      </div>
+      <div style="font-size:.68rem;color:var(--text2);margin-top:6px">设为 0 则不切割，单文件持续录制</div>
+    </div>
+
+    <!-- Schedule Start (Auto Start) -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-label"><span class="icon">⏰</span> 定时开始（可出门前设置）</span>
+        <button class="schedule-switch" id="scheduleStartToggle" onclick="toggleScheduleStart()"></button>
+      </div>
+      <div id="scheduleStartBody" style="display:none">
+        <div class="schedule-row" style="margin-bottom:8px">
+          <input type="number" id="scheduleStartMinutes" min="0.5" max="1440" step="0.5" value="30" placeholder="分钟后自动开始录制">
+          <span style="font-size:.78rem;color:var(--text2);white-space:nowrap">分钟后开始</span>
+        </div>
+        <div class="schedule-row" style="margin-bottom:8px;font-size:.78rem;color:var(--text2)">
+          <span>预计开始时间:</span>
+          <span id="scheduleStartTime" style="font-weight:700;color:var(--accent)">—</span>
+        </div>
+        <div id="scheduleStartCountdown" style="display:none;font-size:.78rem;color:var(--warning);font-weight:600;text-align:center"></div>
+        <div style="margin-top:6px;font-size:.65rem;color:var(--text2)">✅ 后端定时，关掉浏览器也生效</div>
+      </div>
+    </div>
+
+    <!-- Schedule (Auto Stop) -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-label"><span class="icon">⏰</span> 定时停止（可选）</span>
+        <button class="schedule-switch" id="scheduleToggle" onclick="toggleSchedule()"></button>
+      </div>
+      <div id="scheduleBody" style="display:none">
+        <div class="schedule-row" style="margin-bottom:8px">
+          <input type="number" id="scheduleMinutes" min="1" max="1440" value="60" placeholder="分钟后自动停止">
+          <span style="font-size:.78rem;color:var(--text2);white-space:nowrap">分钟后停止</span>
+        </div>
+        <div id="scheduleCountdown" style="display:none;font-size:.78rem;color:var(--warning);font-weight:600;text-align:center"></div>
+      </div>
+    </div>
+
+    <!-- Record Button + Actions -->
+    <div class="record-section">
+      <button class="record-btn start" id="btnRecord" onclick="handleRecord()" title="开始录制 / 停止录制">
+        ▶
+      </button>
+      <div class="record-label" id="recordLabel">点击开始录制</div>
+    </div>
+
+    <div class="action-row">
+      <button class="btn btn-accent" id="btnSplit" onclick="doSplit()" disabled>✂ 切新段</button>
+      <button class="btn btn-warning" id="btnPause" onclick="doPause()" disabled>⏸ 暂停</button>
+    </div>
+
+    <!-- Progress Ring -->
+    <div class="progress-ring-wrap" id="progressRingWrap" style="display:none">
+      <div class="progress-ring">
+        <svg viewBox="0 0 100 100">
+          <circle class="bg" cx="50" cy="50" r="42"/>
+          <circle class="fg" id="progressFg" cx="50" cy="50" r="42" stroke-dasharray="263.89" stroke-dashoffset="263.89"/>
+        </svg>
+        <div class="inner" id="progressInner">
+          <span class="time">0:00</span>
+          <span class="unit">录制中</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status -->
+    <div class="card" style="text-align:center" id="statusCard">
+      <div style="font-size:.82rem;font-weight:600" id="statusText">就绪</div>
+    </div>
+  </div>
+
+  <!-- ==================== TAB: Stats ==================== -->
+  <div class="tab-panel" id="tab-stats">
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card">
+        <div class="stat-value" id="statTime">0:00</div>
+        <div class="stat-label">当前段时长</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value success" id="statSize">0 B</div>
+        <div class="stat-label">当前文件大小</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value accent" id="statSegments">0</div>
+        <div class="stat-label">已生成分段</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value warning" id="statTotalTime">0:00</div>
+        <div class="stat-label">本次总录制时长</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="statBitrate">—</div>
+        <div class="stat-label">估算码率</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="statDisk">—</div>
+        <div class="stat-label">磁盘剩余空间</div>
+      </div>
+    </div>
+
+    <!-- Segment Timeline -->
+    <div class="card" style="margin-top:10px">
+      <div class="card-header"><span class="card-label">📋 分段时间线</span></div>
+      <div class="timeline" id="timeline">
+        <div class="empty-state">
+          <div class="empty-icon">📭</div>
+          <p>暂无录制分段</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Log Viewer -->
+    <div class="card" style="margin-top:10px">
+      <div class="card-header">
+        <span class="card-label">📜 日志</span>
+        <div style="display:flex;gap:4px">
+          <button class="icon-btn" onclick="filterLog('all')" style="width:auto;padding:2px 8px;font-size:.6rem;font-weight:700" id="logFilterAll">全部</button>
+          <button class="icon-btn" onclick="filterLog('error')" style="width:auto;padding:2px 8px;font-size:.6rem;font-weight:700" id="logFilterErr">⚠</button>
+        </div>
+      </div>
+      <div class="log-box" id="logBox">等待操作...</div>
+    </div>
+  </div>
+
+  <!-- ==================== TAB: History ==================== -->
+  <div class="tab-panel" id="tab-history">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <span class="card-label">🕐 录制历史 (最近50条)</span>
+        <button class="icon-btn" onclick="clearAllHistory()" title="清空全部" style="width:auto;padding:4px 12px;font-size:.68rem;font-weight:700;color:var(--error)">🗑 清空</button>
+      </div>
+      <input type="text" class="hist-search" id="histSearch" placeholder="🔍 搜索URL或主播名..." oninput="renderHistory()">
+      <div id="histList" style="max-height:400px;overflow-y:auto">
+        <div class="empty-state"><div class="empty-icon">📭</div><p>暂无历史记录</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TAB: Settings ==================== -->
+  <div class="tab-panel" id="tab-settings">
+    <div class="card">
+      <div class="card-header"><span class="card-label">🔔 通知设置</span></div>
+      <label style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;cursor:pointer">
+        <span style="font-size:.84rem">浏览器桌面通知</span>
+        <button class="schedule-switch on" id="notifyToggle" onclick="toggleNotify()"></button>
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;cursor:pointer">
+        <span style="font-size:.84rem">声音提示</span>
+        <button class="schedule-switch on" id="soundToggle" onclick="toggleSound()"></button>
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;cursor:pointer">
+        <span style="font-size:.84rem">录制开始时自动通知</span>
+        <button class="schedule-switch on" id="autoNotifyToggle" onclick="toggleAutoNotify()"></button>
+      </label>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-label">🍪 抖音 Cookie (sessionid)</span></div>
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <input type="text" id="cookieInput" placeholder="粘贴 sessionid 到这里..."
+               style="flex:1;padding:6px 10px;border-radius:6px;border:1px solid var(--border);font-size:.78rem;background:var(--card);color:var(--text);font-family:monospace">
+        <button onclick="saveCookie()" style="padding:6px 12px;border-radius:6px;border:none;background:var(--accent);color:#fff;font-size:.78rem;cursor:pointer;white-space:nowrap">保存</button>
+      </div>
+      <div id="cookieStatus" style="font-size:.7rem;color:var(--text2);margin-top:4px"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-label">💾 录播文件保存目录</span></div>
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <input type="text" id="outputDirInput" placeholder="例如 D:/LiveRecorder/recordings..."
+               style="flex:1;padding:6px 10px;border-radius:6px;border:1px solid var(--border);font-size:.78rem;background:var(--card);color:var(--text);font-family:monospace">
+        <button onclick="browseFolder()" style="padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:.78rem;cursor:pointer;white-space:nowrap" title="浏览文件夹">📂</button>
+        <button onclick="saveOutputDir()" style="padding:6px 12px;border-radius:6px;border:none;background:var(--accent);color:#fff;font-size:.78rem;cursor:pointer;white-space:nowrap">保存</button>
+      </div>
+      <div id="outputDirStatus" style="font-size:.7rem;color:var(--text2);margin-top:4px"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-label">⌨ 快捷键</span></div>
+      <div style="font-size:.78rem;line-height:2.2">
+        <div><kbd>Ctrl+Enter</kbd> &nbsp;开始 / 停止录制</div>
+        <div><kbd>Ctrl+S</kbd> &nbsp;切新段</div>
+        <div><kbd>Ctrl+D</kbd> &nbsp;切换主题</div>
+        <div><kbd>Ctrl+1~4</kbd> &nbsp;切换标签页</div>
+      </div>
+    </div>
+
+    <div class="card" style="text-align:center">
+      <p style="font-size:.7rem;color:var(--text2);line-height:1.8">
+        LiveRecorder Pro v2.0<br>
+        Built with ❤️ · 抖音直播后台录制工具
+      </p>
+    </div>
+  </div>
+
+  <!-- ===== Shortcuts Bar ===== -->
+  <div class="shortcuts-bar">
+    <span><kbd>Ctrl+Enter</kbd> 录制</span>
+    <span><kbd>Ctrl+S</kbd> 切段</span>
+    <span><kbd>Ctrl+D</kbd> 主题</span>
+  </div>
+</div>
+
+<!-- ===== Modals ===== -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-box">
+    <h3>⚠ 确认操作</h3>
+    <p id="confirmMsg">确定要执行此操作吗？</p>
+    <div class="modal-btns">
+      <button class="modal-btn modal-btn-cancel" onclick="closeConfirm()">取消</button>
+      <button class="modal-btn modal-btn-danger" id="confirmOkBtn">确定</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="shortcutsModal">
+  <div class="modal-box">
+    <h3>⌨ 快捷键一览</h3>
+    <div style="text-align:left;font-size:.82rem;line-height:2.4;font-family:monospace">
+      <div>Ctrl + Enter &nbsp;→&nbsp; 开始 / 停止录制</div>
+      <div>Ctrl + S &nbsp;&nbsp;&nbsp;&nbsp;→&nbsp; 手动切新段</div>
+      <div>Ctrl + D &nbsp;&nbsp;&nbsp;&nbsp;→&nbsp; 切换日间/黑夜主题</div>
+      <div>Ctrl + 1~4 &nbsp;→&nbsp; 切换标签页</div>
+      <div>Esc &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→&nbsp; 关闭弹窗</div>
+    </div>
+    <div class="modal-btns" style="margin-top:18px">
+      <button class="modal-btn modal-btn-accent" onclick="closeShortcuts()">知道了</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Toast Container ===== -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+let quality = 'or4';
+let bufferMb = 20;
+let localStartTime = 0;
+let lastFile = '';
+let sessionSegments = [];        // [{time, file, size}]
+let sessionTotalStart = 0;      // 本次录制开始时间
+let pollingInterval = null;
+let scheduleTimer = null;
+let scheduleSeconds = 0;
+let scheduleStartEnabled = false;
+let scheduleStartTimer = null;
+let scheduleStartSeconds = 0;
+let prevFileSize = 0;
+let prevSizeTime = 0;
+let wasPaused = false;
+let pausedElapsed = 0;
+
+// Settings
+let settings = {
+  notify: true,
+  sound: true,
+  autoNotify: true,
+  theme: 'light',
+};
+try {
+  const saved = JSON.parse(localStorage.getItem('recorder-settings'));
+  if (saved) Object.assign(settings, saved);
+} catch(e) {}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function $(id) { return document.getElementById(id); }
+function formatSize(bytes) {
+  if (!bytes || bytes < 1024) return (bytes||0) + ' B';
+  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+  if (bytes < 1073741824) return (bytes / 1048576).toFixed(1) + ' MB';
+  return (bytes / 1073741824).toFixed(2) + ' GB';
+}
+function formatTime(sec) {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m}:${String(s).padStart(2,'0')}`;
+}
+function getSegMin() { return Math.max(0, parseInt($('segInput').value) || 0); }
+function clearSeg() { $('segInput').value = 0; toggleSegClearBtn(); }
+function onSegInput() { toggleSegClearBtn(); }
+function toggleSegClearBtn() {
+  const v = $('segInput').value;
+  $('clearSegBtn').classList.toggle('visible', v !== '0' && v !== '');
+}
+function clearUrl() { $('url').value = ''; toggleClearBtn(); }
+function toggleClearBtn() {
+  $('clearUrlBtn').classList.toggle('visible', $('url').value.length > 0);
+}
+function clearName() { $('name').value = ''; toggleNameClearBtn(); }
+function toggleNameClearBtn() {
+  $('clearNameBtn').classList.toggle('visible', $('name').value.length > 0);
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function toast(msg, type='info') {
+  if (type === 'error' && !settings.notify) return; // still show errors
+  const c = $('toastContainer');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  c.appendChild(el);
+  setTimeout(() => {
+    el.style.animation = 'slideOut .3s ease forwards';
+    setTimeout(() => el.remove(), 300);
+  }, 2500);
+}
+
+// ============================================================
+// SOUND (Web Audio API - simple beeps)
+// ============================================================
+let audioCtx = null;
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+function beep(freq, duration, type='sine') {
+  if (!settings.sound) return;
+  try {
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.value = 0.08;
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + duration);
+  } catch(e) {}
+}
+function soundStart() { beep(800, .15); setTimeout(() => beep(1200, .2), 150); }
+function soundStop() { beep(400, .3, 'triangle'); }
+function soundSplit() { beep(600, .08); setTimeout(() => beep(900, .1), 80); }
+function soundError() { beep(200, .4, 'sawtooth'); }
+
+// ============================================================
+// NOTIFICATION
+// ============================================================
+function notify(title, body) {
+  if (!settings.notify) return;
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'granted') {
+    new Notification(title, { body, icon: '🎬' });
+  } else if (Notification.permission !== 'denied') {
+    Notification.requestPermission().then(p => {
+      if (p === 'granted') new Notification(title, { body, icon: '🎬' });
+    });
+  }
+}
+
+// ============================================================
+// THEME
+// ============================================================
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute('data-theme');
+  const next = cur === 'dark' ? '' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  settings.theme = next || 'light';
+  saveSettings();
+}
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', settings.theme === 'light' ? '' : 'dark');
+}
+
+// Cookie management
+async function loadCookie() {
+  try {
+    const r = await fetch('/api/get_cookie');
+    const d = await r.json();
+    if (d.sessionid) {
+      $('cookieInput').value = d.sessionid;
+      $('cookieStatus').textContent = '✅ 已加载 (' + d.sessionid.substring(0, 8) + '...)';
+      $('cookieStatus').style.color = 'var(--success)';
+    }
+  } catch(e) {
+    $('cookieStatus').textContent = '⚠ 无法连接服务器';
+    $('cookieStatus').style.color = 'var(--warning)';
+  }
+}
+async function saveCookie() {
+  const sid = $('cookieInput').value.trim();
+  if (!sid) { toast('请先粘贴 sessionid', 'error'); return; }
+  try {
+    const r = await fetch('/api/set_cookie', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({sessionid: sid})
+    });
+    const d = await r.json();
+    if (d.ok) {
+      $('cookieStatus').textContent = '✅ 已保存 (' + sid.substring(0, 8) + '...)';
+      $('cookieStatus').style.color = 'var(--success)';
+      toast('Cookie 已更新', 'success');
+    } else {
+      $('cookieStatus').textContent = '❌ ' + (d.error || '保存失败');
+      $('cookieStatus').style.color = 'var(--danger)';
+    }
+  } catch(e) {
+    $('cookieStatus').textContent = '⚠ 无法连接服务器';
+    $('cookieStatus').style.color = 'var(--warning)';
+  }
+}
+
+// Output directory management
+async function loadOutputDir() {
+  try {
+    const r = await fetch('/api/get_output_dir');
+    const d = await r.json();
+    if (d.output_dir) {
+      $('outputDirInput').value = d.output_dir;
+      $('outputDirStatus').textContent = '✅ 当前保存目录';
+      $('outputDirStatus').style.color = 'var(--success)';
+    }
+  } catch(e) {
+    $('outputDirStatus').textContent = '⚠ 无法连接服务器';
+    $('outputDirStatus').style.color = 'var(--warning)';
+  }
+}
+async function browseFolder() {
+  try {
+    const r = await fetch('/api/browse_folder', { method: 'POST' });
+    const d = await r.json();
+    if (d.ok && d.path) {
+      $('outputDirInput').value = d.path;
+      // 选了之后自动保存
+      saveOutputDir();
+    }
+  } catch(e) {
+    toast('无法打开文件夹选择器', 'error');
+  }
+}
+async function saveOutputDir() {
+  const dir = $('outputDirInput').value.trim();
+  if (!dir) { toast('请输入有效的目录路径', 'error'); return; }
+  try {
+    const r = await fetch('/api/set_output_dir', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({output_dir: dir})
+    });
+    const d = await r.json();
+    if (d.ok) {
+      $('outputDirStatus').textContent = '✅ 已保存 → ' + d.output_dir;
+      $('outputDirStatus').style.color = 'var(--success)';
+      toast('输出目录已更新', 'success');
+    } else {
+      $('outputDirStatus').textContent = '❌ ' + (d.error || '保存失败');
+      $('outputDirStatus').style.color = 'var(--danger)';
+    }
+  } catch(e) {
+    $('outputDirStatus').textContent = '⚠ 无法连接服务器';
+    $('outputDirStatus').style.color = 'var(--warning)';
+  }
+}
+
+// Settings persistence
+function saveSettings() {
+  localStorage.setItem('recorder-settings', JSON.stringify(settings));
+}
+function toggleNotify() {
+  settings.notify = !settings.notify;
+  $('notifyToggle').classList.toggle('on', settings.notify);
+  saveSettings();
+  if (settings.notify && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+  toast(settings.notify ? '桌面通知已开启' : '桌面通知已关闭', 'info');
+}
+function toggleSound() {
+  settings.sound = !settings.sound;
+  $('soundToggle').classList.toggle('on', settings.sound);
+  saveSettings();
+}
+function toggleAutoNotify() {
+  settings.autoNotify = !settings.autoNotify;
+  $('autoNotifyToggle').classList.toggle('on', settings.autoNotify);
+  saveSettings();
+}
+
+// ============================================================
+// MODALS
+// ============================================================
+let confirmCallback = null;
+function showConfirm(msg, cb, okText='确定', type='danger') {
+  $('confirmMsg').textContent = msg;
+  const okBtn = $('confirmOkBtn');
+  okBtn.textContent = okText;
+  okBtn.className = 'modal-btn modal-btn-' + type;
+  okBtn.onclick = () => { closeConfirm(); if (cb) cb(); };
+  $('confirmModal').classList.add('show');
+}
+function closeConfirm() { $('confirmModal').classList.remove('show'); }
+function showShortcuts() { $('shortcutsModal').classList.add('show'); }
+function closeShortcuts() { $('shortcutsModal').classList.remove('show'); }
+
+// ============================================================
+// SCHEDULE
+// ============================================================
+function toggleSchedule() {
+  const body = $('scheduleBody');
+  const toggle = $('scheduleToggle');
+  const show = body.style.display === 'none';
+  body.style.display = show ? 'block' : 'none';
+  toggle.classList.toggle('on', show);
+  if (!show) {
+    $('scheduleCountdown').style.display = 'none';
+    clearInterval(scheduleTimer);
+  }
+}
+function startSchedule() {
+  const mins = parseInt($('scheduleMinutes').value) || 0;
+  if (mins <= 0) return;
+  scheduleSeconds = mins * 60;
+  $('scheduleCountdown').style.display = 'block';
+  $('scheduleCountdown').textContent = `⏰ ${formatTime(scheduleSeconds)} 后自动停止`;
+  clearInterval(scheduleTimer);
+  scheduleTimer = setInterval(() => {
+    scheduleSeconds--;
+    if (scheduleSeconds <= 0) {
+      clearInterval(scheduleTimer);
+      $('scheduleCountdown').textContent = '⏰ 时间到，正在停止...';
+      doStop();
+    } else {
+      $('scheduleCountdown').textContent = `⏰ ${formatTime(scheduleSeconds)} 后自动停止`;
+    }
+  }, 1000);
+}
+function stopSchedule() {
+  clearInterval(scheduleTimer);
+  $('scheduleCountdown').style.display = 'none';
+}
+
+// ============================================================
+// SCHEDULE START (后端定时开始)
+// ============================================================
+function toggleScheduleStart() {
+  const body = $('scheduleStartBody');
+  const toggle = $('scheduleStartToggle');
+  const show = body.style.display === 'none';
+  body.style.display = show ? 'block' : 'none';
+  toggle.classList.toggle('on', show);
+  scheduleStartEnabled = show;
+  if (show) {
+    updateScheduleStartTime();
+  } else {
+    $('scheduleStartCountdown').style.display = 'none';
+    clearInterval(scheduleStartTimer);
+  }
+}
+function updateScheduleStartTime() {
+  const mins = parseFloat($('scheduleStartMinutes').value) || 0;
+  const target = new Date(Date.now() + mins * 60000);
+  $('scheduleStartTime').textContent = target.toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
+}
+$('scheduleStartMinutes').addEventListener('input', updateScheduleStartTime);
+
+// ============================================================
+// TABS
+// ============================================================
+document.querySelector('.tab-bar').addEventListener('click', e => {
+  const btn = e.target.closest('.tab-btn');
+  if (!btn) return;
+  const tab = btn.dataset.tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  const panel = document.getElementById('tab-' + tab);
+  if (panel) panel.classList.add('active');
+});
+
+// ============================================================
+// BUFFER & QUALITY BUTTONS
+// ============================================================
+$('bufRow').addEventListener('click', e => {
+  if (e.target.classList.contains('seg-btn')) {
+    $('bufRow').querySelectorAll('.seg-btn').forEach(b => b.classList.remove('on'));
+    e.target.classList.add('on');
+    bufferMb = parseInt(e.target.dataset.buf);
+  }
+});
+$('qualRow').addEventListener('click', e => {
+  if (e.target.classList.contains('seg-btn')) {
+    $('qualRow').querySelectorAll('.seg-btn').forEach(b => b.classList.remove('on'));
+    e.target.classList.add('on');
+    quality = e.target.dataset.qual;
+  }
+});
+
+// ============================================================
+// KEYBOARD SHORTCUTS
+// ============================================================
+document.addEventListener('keydown', e => {
+  // Don't trigger when typing in inputs
+  if (e.target.tagName === 'INPUT' && e.key !== 'Escape') return;
+
+  if (e.ctrlKey && e.key === 'Enter') {
+    e.preventDefault();
+    handleRecord();
+  } else if (e.ctrlKey && (e.key === 's' || e.key === 'S')) {
+    e.preventDefault();
+    doSplit();
+  } else if (e.ctrlKey && (e.key === 'd' || e.key === 'D')) {
+    e.preventDefault();
+    toggleTheme();
+  } else if (e.ctrlKey && e.key === '1') {
+    e.preventDefault();
+    document.querySelector('[data-tab="control"]').click();
+  } else if (e.ctrlKey && e.key === '2') {
+    e.preventDefault();
+    document.querySelector('[data-tab="stats"]').click();
+  } else if (e.ctrlKey && e.key === '3') {
+    e.preventDefault();
+    document.querySelector('[data-tab="history"]').click();
+  } else if (e.ctrlKey && e.key === '4') {
+    e.preventDefault();
+    document.querySelector('[data-tab="settings"]').click();
+  } else if (e.key === 'Escape') {
+    closeConfirm();
+    closeShortcuts();
+  }
+});
+
+// ============================================================
+// RECORD BUTTON (smart start/stop)
+// ============================================================
+async function handleRecord() {
+  const running = $('statusPill').classList.contains('live');
+  if (running) {
+    await doStop();
+  } else {
+    await doStart();
+  }
+}
+
+// ============================================================
+// API CALLS
+// ============================================================
+async function doStart() {
+  const url = $('url').value.trim();
+  const name = $('name').value.trim();
+  if (!url) { toast('请输入直播间 URL', 'error'); soundError(); return; }
+
+  localStartTime = 0;
+  sessionTotalStart = Date.now();
+  sessionSegments = [];
+  prevFileSize = 0;
+  prevSizeTime = 0;
+  lastFile = '';
+  wasPaused = false;
+  pausedElapsed = 0;
+
+  $('btnRecord').disabled = true;
+  $('btnPause').disabled = true;
+  $('statusPill').classList.add('live');
+  $('statusLabel').textContent = '检测中...';
+  $('btnRecord').classList.add('recording');
+  $('btnRecord').textContent = '⏹';
+  $('btnRecord').classList.remove('start');
+  $('btnRecord').classList.add('stop');
+  $('recordLabel').textContent = '点击停止录制';
+  $('recordLabel').classList.add('live');
+  $('progressRingWrap').style.display = 'flex';
+  clearTimeline();
+
+  try {
+    const apiPath = scheduleStartEnabled ? '/api/schedule_start' : '/api/start';
+    const apiBody = scheduleStartEnabled
+      ? { url, name, delay_minutes: parseFloat($('scheduleStartMinutes').value) || 30, segment_minutes: getSegMin(), quality, buffer_mb: bufferMb }
+      : { url, name, segment_minutes: getSegMin(), quality, buffer_mb: bufferMb };
+
+    const r = await fetch(apiPath, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(apiBody)
+    });
+    const d = await r.json();
+    if (!d.ok) {
+      toast(d.error, 'error');
+      soundError();
+      resetUI();
+      return;
+    }
+    if (scheduleStartEnabled) {
+      // 定时开始模式
+      toast(`⏰ 定时已设置，${d.target_time} 自动开始`, 'success');
+      if (settings.autoNotify) notify('定时录制已设置', `将在 ${d.target_time} 自动开始录制 ${name || url}`);
+      pushHistory(url, name, quality, getSegMin(), bufferMb);
+      $('scheduleStartCountdown').style.display = 'block';
+      $('scheduleStartCountdown').textContent = `⏰ ${formatTime((parseFloat($('scheduleStartMinutes').value) || 30) * 60)} 后自动开始`;
+      scheduleStartSeconds = (parseFloat($('scheduleStartMinutes').value) || 30) * 60;
+      clearInterval(scheduleStartTimer);
+      scheduleStartTimer = setInterval(() => {
+        scheduleStartSeconds--;
+        if (scheduleStartSeconds <= 0) {
+          clearInterval(scheduleStartTimer);
+          $('scheduleStartCountdown').textContent = '⏰ 正在启动录制...';
+        } else {
+          $('scheduleStartCountdown').textContent = `⏰ ${formatTime(scheduleStartSeconds)} 后自动开始`;
+        }
+      }, 1000);
+      $('statusPill').classList.add('live');
+      $('statusLabel').textContent = '等待定时...';
+      $('btnRecord').disabled = false;
+      $('btnSplit').disabled = true;
+      startPolling();
+    } else {
+      soundStart();
+      if (settings.autoNotify) notify('录制已开始', `正在录制 ${name || url}`);
+      pushHistory(url, name, quality, getSegMin(), bufferMb);
+      if ($('scheduleBody').style.display !== 'none') startSchedule();
+      $('btnRecord').disabled = false;
+      $('btnSplit').disabled = false;
+      $('btnPause').disabled = false;
+      startPolling();
+    }
+  } catch(e) {
+    toast('连接服务器失败，请确认后端已启动', 'error');
+    soundError();
+    resetUI();
+  }
+}
+
+async function doSplit() {
+  if (!$('statusPill').classList.contains('live')) return;
+  $('btnSplit').disabled = true;
+  localStartTime = 0;
+  try {
+    await fetch('/api/split', { method: 'POST' });
+    soundSplit();
+    toast('已切新段', 'info');
+  } catch(e) {}
+  setTimeout(() => {
+    if ($('statusPill').classList.contains('live')) $('btnSplit').disabled = false;
+  }, 3000);
+}
+
+async function doPause() {
+  if (!$('statusPill').classList.contains('live')) return;
+  const isPaused = $('btnPause').textContent.includes('继续');
+  if (isPaused) {
+    // 恢复
+    try { await fetch('/api/resume', { method: 'POST' }); } catch(e) {}
+    $('btnPause').textContent = '⏸ 暂停';
+    $('btnPause').classList.remove('btn-danger');
+    $('btnPause').classList.add('btn-warning');
+    $('statusText').innerHTML = '🔴 录制中';
+    toast('录制已恢复', 'success');
+  } else {
+    // 暂停
+    try { await fetch('/api/pause', { method: 'POST' }); } catch(e) {}
+    $('btnPause').textContent = '▶ 继续';
+    $('btnPause').classList.remove('btn-warning');
+    $('btnPause').classList.add('btn-danger');
+    $('statusText').innerHTML = '⏸ 已暂停';
+    toast('录制已暂停', 'warning');
+  }
+}
+
+async function doStop() {
+  try {
+    // 无论什么模式，停止录制都调用 /api/stop
+    await fetch('/api/stop', { method: 'POST' });
+  } catch(e) {}
+  soundStop();
+  stopSchedule();
+  clearInterval(scheduleStartTimer);
+  $('scheduleStartCountdown').style.display = 'none';
+  resetUI();
+  notify('录制已停止', `共录制 ${formatTime(Math.floor((Date.now() - sessionTotalStart) / 1000))}`);
+  toast('录制已停止', 'warning');
+}
+
+function resetUI() {
+  $('btnRecord').disabled = false;
+  $('btnSplit').disabled = true;
+  $('btnPause').disabled = true;
+  $('btnPause').textContent = '⏸ 暂停';
+  $('btnPause').classList.remove('btn-danger');
+  $('btnPause').classList.add('btn-warning');
+  $('statusPill').classList.remove('live');
+  $('statusLabel').textContent = '就绪';
+  $('btnRecord').classList.remove('recording', 'stop');
+  $('btnRecord').classList.add('start');
+  $('btnRecord').textContent = '▶';
+  $('recordLabel').textContent = '点击开始录制';
+  $('recordLabel').classList.remove('live');
+  $('progressRingWrap').style.display = 'none';
+  $('statusText').innerHTML = '就绪';
+  localStartTime = 0;
+  lastFile = '';
+  wasPaused = false;
+  pausedElapsed = 0;
+  stopSchedule();
+  clearInterval(scheduleStartTimer);
+  $('scheduleStartCountdown').style.display = 'none';
+  scheduleStartSeconds = 0;
+}
+
+// ============================================================
+// POLLING
+// ============================================================
+function startPolling() {
+  if (pollingInterval) return;
+  poll();
+  pollingInterval = setInterval(poll, 1000);
+}
+
+function stopPolling() {
+  clearInterval(pollingInterval);
+  pollingInterval = null;
+}
+
+async function poll() {
+  try {
+    const r = await fetch('/api/state');
+    const d = await r.json();
+
+    if (!d.running && $('statusPill').classList.contains('live')) {
+      // Was recording, now stopped externally
+      resetUI();
+      stopPolling();
+      stopSchedule();
+      return;
+    }
+
+    if (d.running) {
+      $('statusPill').classList.add('live');
+      $('statusLabel').textContent = d.paused ? '已暂停' : '录制中';
+      $('btnSplit').disabled = !!d.paused;
+      $('btnPause').disabled = false;
+      // Sync pause button with backend state
+      if (d.paused) {
+        $('btnPause').textContent = '▶ 继续';
+        $('btnPause').classList.remove('btn-warning');
+        $('btnPause').classList.add('btn-danger');
+        if (!wasPaused) {
+          // 刚进入暂停：冻结当前已录制时长
+          pausedElapsed = localStartTime ? Math.floor((Date.now() - localStartTime) / 1000) : 0;
+        }
+      }
+      if (wasPaused && !d.paused) {
+        // 刚恢复：立即重置计时器，防止继承上一段的录制时间
+        localStartTime = Date.now();
+        pausedElapsed = 0;
+      }
+      wasPaused = d.paused;
+    } else {
+      if (!$('btnRecord').disabled) {
+        // Only reset if not actively recording
+      }
+    }
+
+    // Detect new segment
+    if (d.running && d.current_file && d.current_file !== lastFile) {
+      if (lastFile && sessionTotalStart) {
+        // Save previous segment info
+        const elapsed = localStartTime ? Math.floor((Date.now() - localStartTime) / 1000) : 0;
+        sessionSegments.push({
+          time: new Date().toLocaleTimeString('zh-CN'),
+          file: lastFile,
+          size: prevFileSize,
+          duration: elapsed
+        });
+        updateTimeline();
+      }
+      lastFile = d.current_file;
+      localStartTime = Date.now();
+    }
+
+    if (!d.running) {
+      localStartTime = 0;
+      lastFile = '';
+      wasPaused = false;
+      pausedElapsed = 0;
+    }
+
+    // Calculate elapsed — freeze during pause
+    const realElapsed = localStartTime ? Math.floor((Date.now() - localStartTime) / 1000) : 0;
+    const elapsed = d.paused ? pausedElapsed : realElapsed;
+    const totalElapsed = sessionTotalStart ? Math.floor((Date.now() - sessionTotalStart) / 1000) : 0;
+    const timeStr = formatTime(elapsed);
+
+    // Estimate bitrate
+    const curSize = d.current_file_size || 0;
+    let bitrateStr = '—';
+    if (prevFileSize > 0 && prevSizeTime > 0 && curSize > prevFileSize) {
+      const timeDiff = (Date.now() - prevSizeTime) / 1000;
+      if (timeDiff > 0.5) {
+        const bps = ((curSize - prevFileSize) * 8) / timeDiff;
+        bitrateStr = bps > 1e6 ? (bps/1e6).toFixed(1)+' Mbps' : (bps/1e3).toFixed(0)+' Kbps';
+      }
+    }
+    prevFileSize = curSize;
+    prevSizeTime = Date.now();
+
+    // Update status text
+    const qualLabel = d.quality || '';
+    const schedAt = d.scheduled_at || 0;
+    const schedCountdown = d.scheduled_countdown || 0;
+
+    if (!d.running && schedAt > 0) {
+      // 等待定时开始
+      $('statusText').innerHTML = `⏰ 定时等待中... ${formatTime(schedCountdown)} 后自动开始 | 🎬 ${d.name || d.url}`;
+      $('statusLabel').textContent = `定时 ${formatTime(schedCountdown)}`;
+      $('statusPill').classList.add('live');
+      // 可通过主按钮停止定时等待
+    } else if (d.running && schedAt > 0 && !d.current_file) {
+      // 定时等待中
+      $('statusText').innerHTML = `⏰ 定时等待中... ${formatTime(schedCountdown)} 后自动开始 | 🎬 ${d.name || d.url}`;
+      $('statusLabel').textContent = `定时 ${formatTime(schedCountdown)}`;
+    } else {
+      $('statusText').innerHTML = d.running
+        ? (d.paused
+            ? `⏸ 已暂停 [${qualLabel}] | ⏱ ${timeStr} | 📄 ${d.current_file || '—'} | ${formatSize(curSize)}`
+            : `🔴 录制中 [${qualLabel}] | ⏱ ${timeStr} | 📄 ${d.current_file || '—'} | ${formatSize(curSize)}`)
+        : '⚪ 就绪';
+    }
+
+    // Detect transition from scheduled to recording
+    if (d.running && schedAt === 0) {
+      // 定时已触发（或直接录制中）
+      // 1) 确保按钮启用 — 即使还没创建文件
+      if ($('btnRecord').disabled) {
+        $('btnRecord').disabled = false;
+      }
+      // 2) 完整转换（首次检测到文件时）
+      if (d.current_file && !$('btnRecord').classList.contains('stop')) {
+        $('btnRecord').classList.add('recording', 'stop');
+        $('btnRecord').classList.remove('start');
+        $('btnRecord').textContent = '⏹';
+        $('recordLabel').textContent = '点击停止录制';
+        $('recordLabel').classList.add('live');
+        $('progressRingWrap').style.display = 'flex';
+        clearInterval(scheduleStartTimer);
+        $('scheduleStartCountdown').style.display = 'none';
+        soundStart();
+      }
+      // 3) 定时已触发但还没文件 — 清理倒计时显示
+      if (!d.current_file && $('scheduleStartCountdown').style.display !== 'none') {
+        clearInterval(scheduleStartTimer);
+        $('scheduleStartCountdown').style.display = 'none';
+      }
+    }
+
+    // Update progress ring
+    if (d.running && d.segment_minutes > 0 && localStartTime) {
+      const totalSegSec = d.segment_minutes * 60;
+      const progress = Math.min(elapsed / totalSegSec, 1);
+      const circumference = 263.89; // 2π × 42
+      $('progressFg').style.strokeDashoffset = circumference * (1 - progress);
+      $('progressRingWrap').style.display = 'flex';
+      const inner = $('progressInner');
+      inner.innerHTML = `<span class="time">${timeStr}</span><span class="unit">${d.segment_minutes}分钟切割</span>`;
+      inner.classList.add('live');
+      // Color transition
+      const hue = 260 - progress * 260; // purple to red
+      $('progressFg').style.stroke = `hsl(${Math.max(0, hue)}, 70%, 55%)`;
+    } else if (d.running) {
+      $('progressRingWrap').style.display = 'flex';
+      $('progressFg').style.strokeDashoffset = 0;
+      $('progressFg').style.stroke = 'var(--accent)';
+      const inner = $('progressInner');
+      inner.innerHTML = `<span class="time">${timeStr}</span><span class="unit">不切割</span>`;
+      inner.classList.add('live');
+    }
+
+    // Update stats
+    $('statTime').textContent = timeStr;
+    $('statSize').textContent = formatSize(curSize);
+    $('statSegments').textContent = sessionSegments.length;
+    $('statTotalTime').textContent = formatTime(totalElapsed);
+    $('statBitrate').textContent = bitrateStr;
+
+    // Update status pill
+    $('statusLabel').textContent = d.running ? `录制中 ${timeStr}` : '就绪';
+
+    // Update log
+    updateLog(d.log || []);
+
+  } catch(e) {
+    // Server might be down
+  }
+}
+
+function updateLog(logLines) {
+  const box = $('logBox');
+  const currentFilter = box.dataset.filter || 'all';
+  let html = logLines.slice(-20).map(l => {
+    let cls = 'log-info';
+    if (l.includes('❌') || l.includes('失败') || l.includes('错误')) cls = 'log-error';
+    else if (l.includes('⚠') || l.includes('等待') || l.includes('重连')) cls = 'log-warn';
+    else if (l.includes('✅') || l.includes('完成')) cls = 'log-success';
+    else if (l.includes('🔍') || l.includes('📦') || l.includes('🔄')) cls = 'log-accent';
+    return {html: `<div class="${cls}">${l}</div>`, cls};
+  });
+  if (currentFilter !== 'all') {
+    html = html.filter(l => l.cls.includes(currentFilter));
+  }
+  box.innerHTML = html.map(l => l.html).join('') || '<div class="log-info">等待操作...</div>';
+  box.scrollTop = box.scrollHeight;
+  box.dataset.logData = JSON.stringify(logLines);
+}
+function filterLog(type) {
+  $('logBox').dataset.filter = type;
+  const data = $('logBox').dataset.logData;
+  if (data) updateLog(JSON.parse(data));
+  document.querySelectorAll('#logFilterAll, #logFilterErr').forEach(b => b.style.background = '');
+  if (type === 'all') $('logFilterAll').style.background = 'var(--border)';
+  else $('logFilterErr').style.background = 'var(--border)';
+}
+
+// ============================================================
+// TIMELINE
+// ============================================================
+function updateTimeline() {
+  const tl = $('timeline');
+  if (!sessionSegments.length) {
+    tl.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>暂无录制分段</p></div>';
+    return;
+  }
+  tl.innerHTML = sessionSegments.map((s, i) => `
+    <div class="timeline-item ${i === sessionSegments.length - 1 ? 'active' : ''}">
+      <span class="tl-time">${s.time}</span>
+      &nbsp;→&nbsp;
+      <span class="tl-file">${s.file}</span>
+      <span class="tl-size">(${formatSize(s.size)}, ${formatTime(s.duration||0)})</span>
+    </div>
+  `).join('');
+}
+function clearTimeline() {
+  sessionSegments = [];
+  updateTimeline();
+}
+
+// ============================================================
+// HISTORY
+// ============================================================
+const HIST_KEY = 'recorder-history';
+const MAX_HIST = 50;
+
+function loadHistory() {
+  try { return JSON.parse(localStorage.getItem(HIST_KEY)) || []; } catch(e) { return []; }
+}
+function saveHistory(list) {
+  localStorage.setItem(HIST_KEY, JSON.stringify(list.slice(0, MAX_HIST)));
+}
+function pushHistory(url, name, qual, seg, buf) {
+  let list = loadHistory();
+  list = list.filter(h => h.url !== url);
+  list.unshift({
+    url, name, quality: qual,
+    segment_minutes: seg, buffer_mb: buf,
+    time: new Date().toLocaleString('zh-CN')
+  });
+  saveHistory(list);
+}
+
+const qualLabel = {or4:'原画',uhd:'超清',hd:'高清',sd:'标清',ld:'流畅'};
+function renderHistory() {
+  const search = ($('histSearch')?.value || '').toLowerCase();
+  let list = loadHistory();
+  if (search) {
+    list = list.filter(h => h.url.toLowerCase().includes(search) || (h.name||'').toLowerCase().includes(search));
+  }
+  const container = $('histList');
+  if (!list.length) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>' + (search ? '无匹配记录' : '暂无历史记录') + '</p></div>';
+    return;
+  }
+  container.innerHTML = list.map((h, i) => `
+    <div class="hist-item" onclick="applyHistory(${i})">
+      <div class="hist-thumb">🎬</div>
+      <div class="hist-info">
+        <div class="hi-name">${h.name || h.url.split('/').pop()}</div>
+        <div class="hi-url">${h.url}</div>
+        <div class="hi-meta">${qualLabel[h.quality]||h.quality} · ${h.segment_minutes}min · 缓冲${h.buffer_mb}MB · ${h.time}</div>
+      </div>
+      <button class="hist-del" onclick="event.stopPropagation();deleteHistory(${i})" title="删除">✕</button>
+    </div>
+  `).join('');
+}
+function applyHistory(idx) {
+  const list = loadHistory();
+  const h = list[idx];
+  if (!h) return;
+  $('url').value = h.url;
+  $('name').value = h.name || '';
+  toggleClearBtn();
+  toggleNameClearBtn();
+  quality = h.quality || 'or4';
+  bufferMb = h.buffer_mb || 20;
+  $('segInput').value = h.segment_minutes ?? 0;
+  toggleSegClearBtn();
+  document.querySelectorAll('#qualRow .seg-btn').forEach(b => b.classList.toggle('on', b.dataset.qual === quality));
+  document.querySelectorAll('#bufRow .seg-btn').forEach(b => b.classList.toggle('on', parseInt(b.dataset.buf) === bufferMb));
+  // Switch to control tab
+  document.querySelector('[data-tab="control"]').click();
+  // Close inline dropdown if open
+  $('histDropInControl').style.display = 'none';
+}
+function deleteHistory(idx) {
+  const list = loadHistory();
+  const h = list[idx];
+  if (!h) return;
+  showConfirm(`确定删除这条记录？\n\n${h.url}`, () => {
+    let list = loadHistory();
+    list.splice(idx, 1);
+    saveHistory(list);
+    renderHistory();
+  }, '删除');
+}
+function clearAllHistory() {
+  const list = loadHistory();
+  if (!list.length) { toast('历史记录已为空', 'info'); return; }
+  showConfirm(`确定清空全部 ${list.length} 条历史记录？此操作不可撤销。`, () => {
+    saveHistory([]);
+    renderHistory();
+    toast('历史记录已清空', 'info');
+  }, '清空全部');
+}
+
+// ============================================================
+// INLINE HISTORY DROPDOWN (in Control tab)
+// ============================================================
+function toggleHistoryInControl() {
+  const drop = $('histDropInControl');
+  const show = drop.style.display === 'none';
+  drop.style.display = show ? 'block' : 'none';
+  if (show) renderHistoryInline();
+}
+function renderHistoryInline() {
+  const list = loadHistory();
+  const drop = $('histDropInControl');
+  if (!list.length) {
+    drop.innerHTML = '<div style="padding:12px;color:var(--text2);font-size:.75rem;text-align:center">暂无历史记录</div>';
+    return;
+  }
+  drop.innerHTML = list.slice(0, 8).map((h, i) => `
+    <div class="hist-item" onclick="applyHistory(${i})" style="font-size:.72rem">
+      <div class="hist-thumb" style="width:28px;height:28px;font-size:.8rem">🎬</div>
+      <div class="hist-info">
+        <div class="hi-name" style="font-size:.75rem">${h.name || h.url.split('/').pop()}</div>
+        <div class="hi-url" style="font-size:.6rem">${h.url}</div>
+      </div>
+    </div>
+  `).join('');
+}
+// Close on outside click
+document.addEventListener('click', e => {
+  if (!e.target.closest('#histDropInControl') && !e.target.closest('.icon-btn[onclick*="toggleHistoryInControl"]')) {
+    $('histDropInControl').style.display = 'none';
+  }
+});
+
+// ============================================================
+// INIT
+// ============================================================
+function init() {
+  applyTheme();
+  loadCookie();
+
+  // Apply settings
+  $('notifyToggle').classList.toggle('on', settings.notify);
+  $('soundToggle').classList.toggle('on', settings.sound);
+  $('autoNotifyToggle').classList.toggle('on', settings.autoNotify);
+
+  // Auto-save draft URL
+  try {
+    const draft = JSON.parse(localStorage.getItem('recorder-draft') || '{}');
+    if (draft.url) $('url').value = draft.url;
+    if (draft.name) $('name').value = draft.name;
+    if (draft.segMin !== undefined) $('segInput').value = draft.segMin;
+    if (draft.quality) {
+      quality = draft.quality;
+      document.querySelectorAll('#qualRow .seg-btn').forEach(b => b.classList.toggle('on', b.dataset.qual === quality));
+    }
+    if (draft.bufferMb) {
+      bufferMb = draft.bufferMb;
+      document.querySelectorAll('#bufRow .seg-btn').forEach(b => b.classList.toggle('on', parseInt(b.dataset.buf) === bufferMb));
+    }
+    toggleClearBtn();
+    toggleNameClearBtn();
+    toggleSegClearBtn();
+  } catch(e) {}
+
+  // Save draft on input changes
+  const saveDraft = () => {
+    localStorage.setItem('recorder-draft', JSON.stringify({
+      url: $('url').value, name: $('name').value,
+      segMin: getSegMin(), quality, bufferMb
+    }));
+  };
+  ['url', 'name', 'segInput'].forEach(id => {
+    $('id')?.addEventListener('input', saveDraft);
+  });
+  $('qualRow').addEventListener('click', saveDraft);
+  $('bufRow').addEventListener('click', saveDraft);
+
+  // Poll immediately to check if already recording
+  poll();
+  startPolling();
+
+  // Render history initially
+  renderHistory();
+
+  // Load output dir from server
+  loadOutputDir();
+
+  // Request notification permission early
+  if (settings.notify && Notification.permission === 'default') {
+    // Defer - will request on first notify
+  }
+}
+
+// Auto-save draft before unload
+window.addEventListener('beforeunload', () => {
+  localStorage.setItem('recorder-draft', JSON.stringify({
+    url: $('url').value, name: $('name').value,
+    segMin: getSegMin(), quality, bufferMb
+  }));
+});
+
+// Override doStart to save history
+const origDoStart = doStart;
+doStart = async function() {
+  const url = $('url').value.trim();
+  const name = $('name').value.trim();
+  if (url) pushHistory(url, name, quality, getSegMin(), bufferMb);
+  return origDoStart();
+};
+
+init();
+</script>
+</body>
+</html>
+
